@@ -1,7 +1,8 @@
 [package]
-name = "limine-rust-template"
+name = "my64bit-os"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 limine = "0.5"
+#lazy_static = "1.5.0"

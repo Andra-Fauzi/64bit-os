@@ -18,7 +18,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "limine-rust-template"
+name = "my64bit-os"
 version = "0.1.0"
 dependencies = [
  "limine",

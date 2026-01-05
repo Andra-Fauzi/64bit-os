@@ -26,11 +26,17 @@ static _START_MARKER: RequestsStartMarker = RequestsStartMarker::new();
 #[unsafe(link_section = ".requests_end_marker")]
 static _END_MARKER: RequestsEndMarker = RequestsEndMarker::new();
 
+/// Import some things ....
+mod pixel;
+mod terminal;
+use crate::terminal::print;
+
 #[unsafe(no_mangle)]
 unsafe extern "C" fn kmain() -> ! {
     // All limine requests must also be referenced in a called function, otherwise they may be
     // removed by the linker.
     assert!(BASE_REVISION.is_supported());
+    /*
 
     if let Some(framebuffer_response) = FRAMEBUFFER_REQUEST.get_response() {
         if let Some(framebuffer) = framebuffer_response.framebuffers().next() {
@@ -51,11 +57,36 @@ unsafe extern "C" fn kmain() -> ! {
         }
     }
 
+    for i in 0..100{
+        pixel::draw_pixel(i + 500, 20, 0xFFFFFFFF);
+    }
+
+    pixel::draw_line(500, 500, 1000, 1000, 0xFFFFFFFF);
+    */
+
+    for i in 0..500 {
+        print!("halo andra ini {}", "kania");
+    }
+    println!("entah apa yang merasuki mu");
+
     hcf();
 }
 
 #[panic_handler]
 fn rust_panic(_info: &core::panic::PanicInfo) -> ! {
+    unsafe {
+        asm!("cli");
+    }
+
+    println!("\n!!! KERNEL PANIC !!!");
+
+    if let Some(loc) = _info.location() {
+        println!("At \n {}:{}:{}", loc.file(), loc.line(), loc.column());
+    }
+
+    println!("{}", _info.message());
+
+
     hcf();
 }
 
