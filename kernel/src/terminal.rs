@@ -1,7 +1,7 @@
 use core::fmt::{self, Write};
-use crate::pixel;
 use crate::FRAMEBUFFER_REQUEST;
 use core::ptr;
+use core::arch::asm;
 
 // Size of FONT
 const FONT_H: u8 = 16;
@@ -42,6 +42,33 @@ impl Write for Terminal {
             printc(c);
         }
         Ok(())
+    }
+}
+
+pub fn remove_before() {
+    unsafe {
+        if X > 0 {
+            X -= FONT_W as u64;
+        }
+        if let Some(resp) = FRAMEBUFFER_REQUEST.get_response() {
+            if let Some(fb) = resp.framebuffers().next() {
+            let width = fb.width();
+            let height = fb.height();
+            let pitch = fb.pitch() as u64; // bytes per row
+            let bpp = fb.bpp() / 8;        // bytes per pixel
+
+            for y in 0..FONT_H {
+                for x in 0..FONT_W {
+                    let offset = (y as u64 + Y) as u64 * pitch + (x as u64 + X) as u64 * bpp as u64;
+                    fb
+                            .addr()
+                            .add(offset as usize)
+                            .cast::<u32>()
+                            .write(0x00000000);
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -90,7 +117,7 @@ pub fn printc(c: char) {
                     X = 0;
                     Y += FONT_H as u64;
                 }
-                if Y >= height - FONT_H as u64 {
+                if Y >= height - (FONT_H * 2) as u64 {
                     scrolling();
                 }
             }
@@ -103,7 +130,29 @@ pub fn printc(c: char) {
 
 // this function is backend of the macro
 pub fn print(args: fmt::Arguments) {
-    Terminal.write_fmt(args).unwrap();
+    unsafe {
+        asm!("cli");
+        Terminal.write_fmt(args).unwrap();
+        asm!("sti");
+    }
+}
+
+pub fn clear() {
+    if let Some(resp) = FRAMEBUFFER_REQUEST.get_response() {
+        if let Some(fb) = resp.framebuffers().next() {
+            let height = fb.height();
+            let pitch = fb.pitch() as u64; // bytes per row
+            let bytes = height * pitch;
+            unsafe {
+                let src = fb.addr();
+                ptr::write_bytes(src, 0x00000000, bytes as usize);
+            }
+        }
+    }
+    unsafe {
+        X = 0;
+        Y = 0;
+    }
 }
 
 pub fn scrolling() {

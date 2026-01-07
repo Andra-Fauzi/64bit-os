@@ -1,4 +1,4 @@
-# Limine Rust Template
+# 64 Bit OS
 
 This repository will demonstrate how to set up a basic kernel in Rust using Limine.
 

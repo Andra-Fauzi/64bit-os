@@ -1,5 +1,6 @@
 #![no_std]
 #![no_main]
+#![feature(abi_x86_interrupt)]
 
 use core::arch::asm;
 
@@ -30,6 +31,11 @@ static _END_MARKER: RequestsEndMarker = RequestsEndMarker::new();
 mod pixel;
 mod terminal;
 use crate::terminal::print;
+mod idt;
+mod port;
+mod irq;
+mod pic;
+mod isr;
 
 #[unsafe(no_mangle)]
 unsafe extern "C" fn kmain() -> ! {
@@ -64,10 +70,17 @@ unsafe extern "C" fn kmain() -> ! {
     pixel::draw_line(500, 500, 1000, 1000, 0xFFFFFFFF);
     */
 
-    for i in 0..500 {
-        print!("halo andra ini {}", "kania");
-    }
-    println!("entah apa yang merasuki mu");
+    println!("ISR INIT!");
+    isr::isr_init();
+    println!("ISR DONE!");
+    println!("IRQ INIT!");
+    irq::irq_init();
+    println!("IRQ DONE!");
+    println!("LOAD IDT!");
+    idt::load_idt();
+    println!("IDT DONE!");
+    asm!("sti");
+    terminal::clear();
 
     hcf();
 }
